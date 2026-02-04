@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cazik Game</title>
 
+<!-- TELEGRAM GAME -->
+<script src="https://telegram.org/js/games.js"></script>
+
 <style>
 * {
     box-sizing: border-box;
@@ -92,6 +95,14 @@ button:hover {
 </div>
 
 <script>
+// TELEGRAM READY
+window.onload = () => {
+    if (window.TelegramGameProxy) {
+        TelegramGameProxy.receiveEvent("ready");
+    }
+};
+
+// UI
 function hideAll() {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 }
