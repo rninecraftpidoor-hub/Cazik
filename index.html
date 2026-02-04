@@ -2,42 +2,36 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Тест кнопки</title>
+  <title>Cazik Game</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+<body>
 
-<body style="
-  margin:0;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#ffffff;
-  font-family:Arial, sans-serif;
-">
+<div class="menu">
+  <h1 class="logo">CAZIK</h1>
 
-  <div style="text-align:center;">
-    <button onclick="showText()"
-      style="
-        font-size:24px;
-        padding:15px 30px;
-        cursor:pointer;
-      ">
-      НАЖМИ
-    </button>
+  <button class="btn play">▶ Играть</button>
 
-    <p id="text" style="margin-top:20px; font-size:22px; display:none;">
-      тест
-    </p>
+  <div class="row">
+    <button class="btn shop">🛒 Магазин</button>
   </div>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    Telegram.WebApp.ready();
+  <button class="btn authors" onclick="showAuthors()">👤 Авторы</button>
+</div>
 
-    function showText() {
-      document.getElementById("text").style.display = "block";
-    }
-  </script>
+<div class="authors-screen" id="authors">
+  <div class="authors-box">
+    <h2>Авторы</h2>
+    <p>
+      Я — бот-эгоист 😎<br>
+      Я придумал эту игру.<br>
+      Я сделал этот интерфейс.<br>
+      И да — без меня тут ничего бы не было.
+    </p>
+    <button class="btn back" onclick="hideAuthors()">← Назад</button>
+  </div>
+</div>
 
+<script src="script.js"></script>
 </body>
 </html>
