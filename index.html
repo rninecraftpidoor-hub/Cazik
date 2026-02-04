@@ -1,37 +1,121 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Cazik Game</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cazik Game</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #1e1e2f, #0f0f1a);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.screen {
+    display: none;
+    text-align: center;
+}
+
+.screen.active {
+    display: block;
+}
+
+button {
+    width: 220px;
+    padding: 15px;
+    margin: 10px;
+    font-size: 18px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: #4f46e5;
+    color: white;
+}
+
+button:hover {
+    background: #6366f1;
+}
+
+.back {
+    background: #444;
+}
+
+.authors-bg {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    padding: 30px;
+    border-radius: 20px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="menu">
-  <h1 class="logo">CAZIK</h1>
-
-  <button class="btn play">▶ Играть</button>
-
-  <div class="row">
-    <button class="btn shop">🛒 Магазин</button>
-  </div>
-
-  <button class="btn authors" onclick="showAuthors()">👤 Авторы</button>
+<!-- MENU -->
+<div id="menu" class="screen active">
+    <h1>🎰 CAZIK</h1>
+    <button onclick="play()">🎮 Играть</button><br>
+    <button onclick="shop()">🛒 Магазин</button><br>
+    <button onclick="authors()">👤 Авторы</button>
 </div>
 
-<div class="authors-screen" id="authors">
-  <div class="authors-box">
-    <h2>Авторы</h2>
-    <p>
-      Я егоист <br>
-      Я придумал эту игру.<br>
-      Я сделал этот интерфейс.<br>
-      И да — без меня тут ничего бы не было.
-    </p>
-    <button class="btn back" onclick="hideAuthors()">← Назад</button>
-  </div>
+<!-- GAME -->
+<div id="game" class="screen">
+    <h2>🎮 Game mode</h2>
+    <p>Скоро тут будет игра 😏</p>
+    <button class="back" onclick="menu()">⬅ Назад</button>
 </div>
 
-<script src="script.js"></script>
+<!-- SHOP -->
+<div id="shop" class="screen">
+    <h2>🛒 Магазин</h2>
+    <p>Пока пусто</p>
+    <button class="back" onclick="menu()">⬅ Назад</button>
+</div>
+
+<!-- AUTHORS -->
+<div id="authors" class="screen authors-bg">
+    <h2>👤 Авторы</h2>
+    <p>Создатель: @your_username</p>
+    <p>Telegram Mini Game</p>
+    <button class="back" onclick="menu()">⬅ Назад</button>
+</div>
+
+<script>
+function hideAll() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+}
+
+function menu() {
+    hideAll();
+    document.getElementById('menu').classList.add('active');
+}
+
+function play() {
+    hideAll();
+    document.getElementById('game').classList.add('active');
+}
+
+function shop() {
+    hideAll();
+    document.getElementById('shop').classList.add('active');
+}
+
+function authors() {
+    hideAll();
+    document.getElementById('authors').classList.add('active');
+}
+</script>
+
 </body>
 </html>
