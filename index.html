@@ -3,40 +3,201 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cazik WebApp</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Cazik Dice</title>
+
 <style>
-body {
-  margin:0;
-  background:#0f0f1a;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  font-family:Arial;
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
 }
+
+body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a1f3a, #0d1025);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen {
+    display: none;
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+    text-align: center;
+}
+
+.active {
+    display: block;
+}
+
+h1, h2 {
+    margin-bottom: 20px;
+}
+
 button {
-  padding:15px 25px;
-  font-size:18px;
-  border:none;
-  border-radius:12px;
-  background:#4f46e5;
-  color:white;
+    width: 100%;
+    padding: 16px;
+    margin: 10px 0;
+    font-size: 18px;
+    border: none;
+    border-radius: 999px;
+    background: #5865f2;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #6f7cff;
+}
+
+.back {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: auto;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 999px;
+    background: #2c2f48;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 25px;
+}
+
+.loader {
+    border: 6px solid rgba(255,255,255,0.1);
+    border-top: 6px solid white;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    margin: 20px auto;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.result {
+    font-size: 26px;
+    margin: 15px 0;
 }
 </style>
 </head>
+
 <body>
 
-<div>
-  <h1>🎰 CAZIK</h1>
-  <button onclick="alert('Работает')">КНОПКА</button>
+<!-- ГЛАВНОЕ МЕНЮ -->
+<div id="menu" class="screen active">
+    <div class="card">
+        <h1>🎰 CAZIK</h1>
+
+        <button onclick="goDice()">🎲 Кинуть кубики</button>
+        <button onclick="goBag()">👜 Проверить мешок</button>
+        <button onclick="goTop()">🏆 Топ</button>
+    </div>
+</div>
+
+<!-- ИГРА -->
+<div id="dice" class="screen">
+    <button class="back" onclick="menu()">⬅ Назад</button>
+
+    <div class="card">
+        <h2>🎲 Кубики</h2>
+
+        <button onclick="roll()">🎲 Крутить</button>
+
+        <div id="loader" style="display:none;">
+            <div class="loader"></div>
+            <p>Крутим...</p>
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <button id="take" style="display:none;" onclick="takePrize()">💰 Забрать приз</button>
+    </div>
+</div>
+
+<!-- МЕШОК -->
+<div id="bag" class="screen">
+    <button class="back" onclick="menu()">⬅ Назад</button>
+
+    <div class="card">
+        <h2>👜 Твой мешок</h2>
+        <p>Всего выиграно:</p>
+        <h1 id="bagMoney">0</h1>
+    </div>
+</div>
+
+<!-- ТОП -->
+<div id="top" class="screen">
+    <button class="back" onclick="menu()">⬅ Назад</button>
+
+    <div class="card">
+        <h2>🏆 Топ игроков</h2>
+        <p>Скоро</p>
+    </div>
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+let bag = 0;
+let currentWin = 0;
+
+function hideAll() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+}
+
+function menu() {
+    hideAll();
+    document.getElementById('menu').classList.add('active');
+}
+
+function goDice() {
+    hideAll();
+    document.getElementById('dice').classList.add('active');
+}
+
+function goBag() {
+    hideAll();
+    document.getElementById('bag').classList.add('active');
+    document.getElementById('bagMoney').innerText = bag;
+}
+
+function goTop() {
+    hideAll();
+    document.getElementById('top').classList.add('active');
+}
+
+function roll() {
+    document.getElementById('result').innerText = "";
+    document.getElementById('take').style.display = "none";
+    document.getElementById('loader').style.display = "block";
+
+    setTimeout(() => {
+        document.getElementById('loader').style.display = "none";
+
+        let dice = Math.floor(Math.random() * 6) + 1;
+        currentWin = dice * 10;
+
+        document.getElementById('result').innerText =
+            "Выпало: " + dice + " 🎲 | Выигрыш: " + currentWin;
+
+        document.getElementById('take').style.display = "block";
+    }, 2000);
+}
+
+function takePrize() {
+    bag += currentWin;
+    currentWin = 0;
+    document.getElementById('result').innerText = "Приз забран!";
+    document.getElementById('take').style.display = "none";
+}
 </script>
 
 </body>
