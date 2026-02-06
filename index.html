@@ -396,6 +396,11 @@ async function showLocalTop() {
     document.getElementById("topList").innerText = text || "Пока пусто";
 }
 </script>
+
+function openTop() {
+    hideAll();
+    document.getElementById('top').classList.add('active');
+}
    
 </body>
 </html>
