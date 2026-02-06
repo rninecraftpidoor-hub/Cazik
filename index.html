@@ -2,29 +2,19 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<title>Dice Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cazik Dice</title>
 
 <style>
-* {
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-}
-
 body {
     margin: 0;
-    height: 100vh;
-    background: linear-gradient(135deg, #1a1f3a, #0d1025);
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e1e2f, #2a2a40);
     color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .screen {
     display: none;
-    width: 100%;
-    max-width: 420px;
     padding: 20px;
     text-align: center;
 }
@@ -33,50 +23,34 @@ body {
     display: block;
 }
 
-h1, h2 {
-    margin-bottom: 20px;
-}
-
 button {
-    width: 100%;
-    padding: 16px;
-    margin: 10px 0;
-    font-size: 18px;
+    background: #3b82f6;
     border: none;
-    border-radius: 999px;
-    background: #5865f2;
+    padding: 14px 22px;
+    margin: 8px;
     color: white;
+    font-size: 16px;
+    border-radius: 999px;
     cursor: pointer;
 }
 
 button:hover {
-    background: #6f7cff;
+    background: #2563eb;
 }
 
-.back {
+.header {
     position: absolute;
-    top: 15px;
-    left: 15px;
-    width: auto;
-    padding: 10px 16px;
-    font-size: 14px;
-    border-radius: 999px;
-    background: #2c2f48;
-}
-
-.card {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 25px;
+    left: 10px;
+    top: 10px;
 }
 
 .loader {
-    border: 6px solid rgba(255,255,255,0.1);
-    border-top: 6px solid white;
-    border-radius: 50%;
     width: 60px;
     height: 60px;
-    margin: 20px auto;
+    border: 6px solid #ffffff30;
+    border-top: 6px solid white;
+    border-radius: 50%;
+    margin: 40px auto;
     animation: spin 1s linear infinite;
 }
 
@@ -84,119 +58,106 @@ button:hover {
     100% { transform: rotate(360deg); }
 }
 
-.result {
-    font-size: 26px;
-    margin: 15px 0;
+.big {
+    font-size: 28px;
+    margin: 20px;
 }
 </style>
 </head>
-
 <body>
 
-<!-- ГЛАВНОЕ МЕНЮ -->
+<!-- МЕНЮ -->
 <div id="menu" class="screen active">
-    <div class="card">
-        <h1>🎰 CAZIK</h1>
-
-        <button onclick="goDice()">🎲 Кинуть кубики</button>
-        <button onclick="goBag()">👜 Проверить мешок</button>
-        <button onclick="goTop()">🏆 Топ</button>
-    </div>
+    <h2>🎲 Главное меню</h2>
+    <button onclick="roll()">Кинуть кубики</button>
+    <button onclick="openBag()">Проверить мешок</button>
+    <button onclick="openTop()">Топ</button>
 </div>
 
-<!-- ИГРА -->
-<div id="dice" class="screen">
-    <button class="back" onclick="menu()">⬅ Назад</button>
+<!-- ЗАГРУЗКА -->
+<div id="loading" class="screen">
+    <div class="loader"></div>
+    <div>Крутим кубики...</div>
+</div>
 
-    <div class="card">
-        <h2>🎲 Кубики</h2>
-
-        <button onclick="roll()">🎲 Крутить</button>
-
-        <div id="loader" style="display:none;">
-            <div class="loader"></div>
-            <p>Крутим...</p>
-        </div>
-
-        <div id="result" class="result"></div>
-
-        <button id="take" style="display:none;" onclick="takePrize()">💰 Забрать приз</button>
-    </div>
+<!-- РЕЗУЛЬТАТ -->
+<div id="result" class="screen">
+    <div class="big" id="diceResult"></div>
+    <div class="big" id="winResult"></div>
+    <button onclick="takePrize()">Забрать приз</button>
 </div>
 
 <!-- МЕШОК -->
 <div id="bag" class="screen">
-    <button class="back" onclick="menu()">⬅ Назад</button>
-
-    <div class="card">
-        <h2>👜 Твой мешок</h2>
-        <p>Всего выиграно:</p>
-        <h1 id="bagMoney">0</h1>
+    <div class="header">
+        <button onclick="back()">← Назад</button>
     </div>
+    <h2>👜 Твой мешок</h2>
+    <div class="big" id="bagAmount"></div>
 </div>
 
 <!-- ТОП -->
 <div id="top" class="screen">
-    <button class="back" onclick="menu()">⬅ Назад</button>
-
-    <div class="card">
-        <h2>🏆 Топ игроков</h2>
-        <p>Скоро</p>
+    <div class="header">
+        <button onclick="back()">← Назад</button>
     </div>
+    <h2>🏆 Топ</h2>
+    <div class="big">Скоро</div>
 </div>
 
 <script>
-let bag = 0;
 let currentWin = 0;
 
-function hideAll() {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+function show(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
 }
 
-function menu() {
-    hideAll();
-    document.getElementById('menu').classList.add('active');
+function getBag() {
+    return Number(localStorage.getItem("bag")) || 0;
 }
 
-function goDice() {
-    hideAll();
-    document.getElementById('dice').classList.add('active');
-}
-
-function goBag() {
-    hideAll();
-    document.getElementById('bag').classList.add('active');
-    document.getElementById('bagMoney').innerText = bag;
-}
-
-function goTop() {
-    hideAll();
-    document.getElementById('top').classList.add('active');
+function setBag(value) {
+    localStorage.setItem("bag", value);
 }
 
 function roll() {
-    document.getElementById('result').innerText = "";
-    document.getElementById('take').style.display = "none";
-    document.getElementById('loader').style.display = "block";
+    show("loading");
 
     setTimeout(() => {
-        document.getElementById('loader').style.display = "none";
+        let d1 = Math.floor(Math.random()*6)+1;
+        let d2 = Math.floor(Math.random()*6)+1;
+        currentWin = (d1 + d2) * 5;
 
-        let dice = Math.floor(Math.random() * 6) + 1;
-        currentWin = dice * 10;
+        document.getElementById("diceResult").innerText =
+            `Выпало: ${d1} и ${d2}`;
 
-        document.getElementById('result').innerText =
-            "Выпало: " + dice + " 🎲 | Выигрыш: " + currentWin;
+        document.getElementById("winResult").innerText =
+            `Ты выиграл: ${currentWin}`;
 
-        document.getElementById('take').style.display = "block";
-    }, 2000);
+        show("result");
+    }, 1800);
 }
 
 function takePrize() {
-    bag += currentWin;
+    let total = getBag() + currentWin;
+    setBag(total);
     currentWin = 0;
-    document.getElementById('result').innerText = "Приз забран!";
-    document.getElementById('take').style.display = "none";
+    show("menu");
+}
+
+function openBag() {
+    document.getElementById("bagAmount").innerText =
+        "Всего: " + getBag();
+    show("bag");
+}
+
+function openTop() {
+    show("top");
+}
+
+function back() {
+    show("menu");
 }
 </script>
 
