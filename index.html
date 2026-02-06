@@ -161,5 +161,23 @@ function back() {
 }
 </script>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<script>
+const tg = window.Telegram.WebApp;
+
+tg.expand();
+
+const user = tg.initDataUnsafe?.user;
+const chat = tg.initDataUnsafe?.chat;
+
+let userId = user?.id || "offline";
+let username = user?.username || user?.first_name || "Player";
+let chatId = chat?.id || "private";
+
+console.log("USER:", userId, username);
+console.log("CHAT:", chatId);
+</script>
+
 </body>
 </html>
