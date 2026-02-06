@@ -55,6 +55,11 @@ input{
 
     <input id="bet" type="number" placeholder="Ставка">
 
+    <input id="promoInput" type="text" placeholder="Промокод">
+    <button onclick="usePromo()">Активировать</button>
+
+    <br>
+
     <button onclick="roll()">Кинуть кубики</button>
     <button onclick="openBag()">Проверить мешок</button>
     <button onclick="openTop()">Топ</button>
@@ -165,7 +170,7 @@ async function loadBag(){
 }
 loadBag();
 
-/* КАЗИНО СО СТАВКАМИ + УМЕНЬШЕНИЕ ТОПА */
+/* КАЗИНО */
 window.roll=async()=>{
  const bet=Number(document.getElementById("bet").value);
 
@@ -213,7 +218,6 @@ window.roll=async()=>{
  },1500);
 };
 
-/* Забрать выигрыш */
 window.takePrize=async()=>{
  bag+=currentWin;
 
@@ -244,45 +248,45 @@ async function getLocalTotal(){
  return s.exists()?s.val():0;
 }
 
-/* ТОПЫ */
-window.showGlobalTop=async()=>{
- const snap=await get(ref(db,"users"));
- let list=[];
- snap.forEach(u=>{
-   const d=u.val();
-   list.push({name:d.name,total:d.total||0});
- });
- list.sort((a,b)=>b.total-a.total);
+/* ПРОМОКОДЫ */
+window.usePromo=async()=>{
+ const code=document.getElementById("promoInput").value.trim().toUpperCase();
+ if(!code) return;
 
- let text="";
- list.slice(0,10).forEach((p,i)=>{
-   text+=`${i+1}. ${p.name} — ${p.total}\n`;
- });
+ const promoRef=ref(db,"users/"+userId+"/promos/"+code);
+ const usedSnap=await get(promoRef);
 
- document.getElementById("topResult").innerText=text||"Пусто";
-};
+ let reward=0;
 
-window.showLocalTop=async()=>{
- const snap=await get(ref(db,"groups/"+chatId));
- let list=[];
- snap.forEach(u=>{
-   const d=u.val();
-   list.push({name:d.name,total:d.total||0});
- });
- list.sort((a,b)=>b.total-a.total);
+ if(code==="BATEK"){
+   if(usedSnap.exists()){ alert("Уже использован"); return; }
+   reward=501;
+   await set(promoRef,true);
+ }
+ else if(code==="KOSTYA"){
+   if(usedSnap.exists()){ alert("Уже использован"); return; }
+   reward=750;
+   await set(promoRef,true);
+ }
+ else if(code==="ANAL"){
+   if(String(userId)!=="1842907087"){ alert("Не для тебя"); return; }
+   reward=1000;
+ }
+ else{
+   alert("Неверный промокод");
+   return;
+ }
 
- let text="";
- list.slice(0,10).forEach((p,i)=>{
-   text+=`${i+1}. ${p.name} — ${p.total}\n`;
- });
+ bag+=reward;
 
- document.getElementById("topResult").innerText=text||"Пусто";
+ await update(ref(db,"users/"+userId),{ bag:bag });
+
+ document.getElementById("bagAmount").innerText=bag;
+ alert("Получено: "+reward);
 };
 
 /* УРОВНИ */
-function levelPrice(){
- return level*250;
-}
+function levelPrice(){ return level*250; }
 
 function updateLevelUI(){
  const el=document.getElementById("levelInfo");
