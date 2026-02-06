@@ -165,21 +165,28 @@ async function loadBag(){
 }
 loadBag();
 
-/* КАЗИНО СО СТАВКАМИ */
-window.roll=()=>{
- const bet = Number(document.getElementById("bet").value);
+/* КАЗИНО СО СТАВКАМИ + УМЕНЬШЕНИЕ ТОПА */
+window.roll=async()=>{
+ const bet=Number(document.getElementById("bet").value);
 
- if(!bet || bet<=0){
-   alert("Введи ставку");
-   return;
- }
- if(bet>bag){
-   alert("Недостаточно денег");
-   return;
- }
+ if(!bet||bet<=0){ alert("Введи ставку"); return; }
+ if(bet>bag){ alert("Недостаточно денег"); return; }
 
  bag-=bet;
  document.getElementById("bagAmount").innerText=bag;
+
+ const totalNow=await getTotal();
+ const localNow=await getLocalTotal();
+
+ await update(ref(db,"users/"+userId),{
+   bag:bag,
+   total:totalNow-bet
+ });
+
+ await update(ref(db,"groups/"+chatId+"/"+userId),{
+   name:username,
+   total:localNow-bet
+ });
 
  show("loading");
 
@@ -206,7 +213,7 @@ window.roll=()=>{
  },1500);
 };
 
-/* Забрать */
+/* Забрать выигрыш */
 window.takePrize=async()=>{
  bag+=currentWin;
 
@@ -290,10 +297,7 @@ function updateLevelUI(){
 
 window.buyLevel=async()=>{
  const price=levelPrice();
- if(bag<price){
-   alert("Не хватает денег");
-   return;
- }
+ if(bag<price){ alert("Не хватает денег"); return; }
 
  bag-=price;
  level++;
