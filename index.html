@@ -12,61 +12,35 @@ body {
     background: linear-gradient(135deg, #1e1e2f, #2a2a40);
     color: white;
 }
-
-.screen {
-    display: none;
-    padding: 20px;
-    text-align: center;
-}
-
-.active {
-    display: block;
-}
+.screen { display:none; padding:20px; text-align:center; }
+.active { display:block; }
 
 button {
-    background: #3b82f6;
-    border: none;
-    padding: 14px 22px;
-    margin: 8px;
-    color: white;
-    font-size: 16px;
-    border-radius: 999px;
-    cursor: pointer;
+    background:#3b82f6;
+    border:none;
+    padding:14px 22px;
+    margin:8px;
+    color:white;
+    font-size:16px;
+    border-radius:999px;
 }
 
-button:hover {
-    background: #2563eb;
-}
-
-.header {
-    position: absolute;
-    left: 10px;
-    top: 10px;
-}
+.header { position:absolute; left:10px; top:10px; }
 
 .loader {
-    width: 60px;
-    height: 60px;
-    border: 6px solid #ffffff30;
-    border-top: 6px solid white;
-    border-radius: 50%;
-    margin: 40px auto;
-    animation: spin 1s linear infinite;
+    width:60px;height:60px;
+    border:6px solid #ffffff30;
+    border-top:6px solid white;
+    border-radius:50%;
+    margin:40px auto;
+    animation:spin 1s linear infinite;
 }
-
-@keyframes spin {
-    100% { transform: rotate(360deg); }
-}
-
-.big {
-    font-size: 28px;
-    margin: 20px;
-}
+@keyframes spin {100%{transform:rotate(360deg);}}
+.big{font-size:28px;margin:20px;}
 </style>
 </head>
 <body>
 
-<!-- МЕНЮ -->
 <div id="menu" class="screen active">
     <h2>🎲 Главное меню</h2>
     <button onclick="roll()">Кинуть кубики</button>
@@ -74,30 +48,25 @@ button:hover {
     <button onclick="openTop()">Топ</button>
 </div>
 
-<!-- ЗАГРУЗКА -->
 <div id="loading" class="screen">
     <div class="loader"></div>
     <div>Крутим кубики...</div>
 </div>
 
-<!-- РЕЗУЛЬТАТ -->
 <div id="result" class="screen">
     <div class="big" id="diceResult"></div>
     <div class="big" id="winResult"></div>
     <button onclick="takePrize()">Забрать приз</button>
 </div>
 
-<!-- МЕШОК -->
 <div id="bag" class="screen">
     <div class="header">
         <button onclick="back()">← Назад</button>
     </div>
     <h2>👜 Твой мешок</h2>
-    <div class="big" id="bagAmount"></div>
+    <div class="big" id="bagAmount">0</div>
 </div>
 
-<!-- ТОП -->
-<!-- ТОП -->
 <div id="top" class="screen">
     <div class="header">
         <button onclick="back()">← Назад</button>
@@ -110,79 +79,6 @@ button:hover {
 
     <div class="big" id="topResult">Выбери тип топа</div>
 </div>
-<script>
-let currentWin = 0;
-
-function show(id) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-}
-
-function getBag() {
-    return Number(localStorage.getItem("bag")) || 0;
-}
-
-function setBag(value) {
-    localStorage.setItem("bag", value);
-}
-
-function roll() {
-    show("loading");
-
-    setTimeout(() => {
-        let d1 = Math.floor(Math.random()*6)+1;
-        let d2 = Math.floor(Math.random()*6)+1;
-        currentWin = (d1 + d2) * 5;
-
-        document.getElementById("diceResult").innerText =
-            `Выпало: ${d1} и ${d2}`;
-
-        document.getElementById("winResult").innerText =
-            `Ты выиграл: ${currentWin}`;
-
-        show("result");
-    }, 1800);
-}
-
-function takePrize() {
-    let total = getBag() + currentWin;
-    setBag(total);
-    currentWin = 0;
-    show("menu");
-}
-
-function openBag() {
-    document.getElementById("bagAmount").innerText =
-        "Всего: " + getBag();
-    show("bag");
-}
-
-function openTop() {
-    show("top");
-}
-
-function back() {
-    show("menu");
-}
-</script>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<script>
-const tg = window.Telegram.WebApp;
-
-tg.expand();
-
-const user = tg.initDataUnsafe?.user;
-const chat = tg.initDataUnsafe?.chat;
-
-let userId = user?.id || "offline";
-let username = user?.username || user?.first_name || "Player";
-let chatId = chat?.id || "private";
-
-console.log("USER:", userId, username);
-console.log("CHAT:", chatId);
-</script>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -207,207 +103,114 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 const user = tg.initDataUnsafe?.user;
-
-let userId = user?.id || "offline";
-let username = user?.username || user?.first_name || "Player";
-
-let balance = 0;
-
-// ЗАГРУЗКА МЕШКА
-async function loadBalance() {
-  const snapshot = await get(ref(db, "users/" + userId));
-  if (snapshot.exists()) {
-    balance = snapshot.val().balance || 0;
-  } else {
-    await set(ref(db, "users/" + userId), {
-      name: username,
-      balance: 0
-    });
-    balance = 0;
-  }
-
-  updateBag();
-}
-
-// СОХРАНЕНИЕ
-async function saveBalance() {
-  await update(ref(db, "users/" + userId), {
-    balance: balance
-  });
-}
-
-// ПОКАЗ В МЕШКЕ
-function updateBag() {
-  const el = document.getElementById("bagAmount");
-  if (el) el.innerText = balance;
-}
-
-// ВЫИГРЫШ
-function addWin(amount) {
-  balance += amount;
-  updateBag();
-  saveBalance();
-}
-
-window.addWin = addWin;
-
-loadBalance();
-</script>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-/* --- FIREBASE --- */
-const firebaseConfig = {
-  apiKey: "ТВОЙ_API_KEY",
-  authDomain: "ТВОЙ_DOMAIN",
-  databaseURL: "ТВОЙ_DATABASE_URL",
-  projectId: "ТВОЙ_PROJECT_ID",
-  storageBucket: "ТВОЙ_BUCKET",
-  messagingSenderId: "ТВОЙ_ID",
-  appId: "ТВОЙ_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-/* --- TELEGRAM DATA --- */
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const user = tg.initDataUnsafe?.user;
 const chat = tg.initDataUnsafe?.chat;
 
 const userId = user?.id || "offline";
 const username = user?.username || user?.first_name || "Player";
 const chatId = chat?.id || "private";
 
-/* --- БАЛАНС (МЕШОК) --- */
+let currentWin = 0;
 let bag = 0;
 
-async function loadBag() {
-  const snapshot = await get(ref(db, "users/" + userId));
-  if (snapshot.exists()) {
-    bag = snapshot.val().bag || 0;
-  }
-  document.getElementById("bagAmount").innerText = bag;
+/* UI */
+function show(id){
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+}
+window.openBag=()=>show("bag");
+window.openTop=()=>show("top");
+window.back=()=>show("menu");
+
+/* Загрузка баланса */
+async function loadBag(){
+ const snap=await get(ref(db,"users/"+userId));
+ if(snap.exists()){
+   bag=snap.val().bag||0;
+ }else{
+   await set(ref(db,"users/"+userId),{name:username,bag:0,total:0});
+ }
+ document.getElementById("bagAmount").innerText=bag;
+}
+loadBag();
+
+/* Кубики */
+window.roll=()=>{
+ show("loading");
+ setTimeout(()=>{
+  let d1=Math.floor(Math.random()*6)+1;
+  let d2=Math.floor(Math.random()*6)+1;
+  currentWin=(d1+d2)*5;
+
+  document.getElementById("diceResult").innerText=`Выпало: ${d1} и ${d2}`;
+  document.getElementById("winResult").innerText=`Ты выиграл: ${currentWin}`;
+  show("result");
+ },1500);
+};
+
+/* Забрать приз */
+window.takePrize=async()=>{
+ bag+=currentWin;
+
+ await update(ref(db,"users/"+userId),{
+   name:username,
+   bag:bag,
+   total:(await getTotal())+currentWin
+ });
+
+ await update(ref(db,"groups/"+chatId+"/"+userId),{
+   name:username,
+   total:(await getLocalTotal())+currentWin
+ });
+
+ document.getElementById("bagAmount").innerText=bag;
+ currentWin=0;
+ show("menu");
+};
+
+async function getTotal(){
+ const s=await get(ref(db,"users/"+userId+"/total"));
+ return s.exists()?s.val():0;
 }
 
-async function saveWin(amount) {
-  bag += amount;
-
-  // сохраняем баланс
-  await update(ref(db, "users/" + userId), {
-    name: username,
-    bag: bag,
-    total: (await getTotal()) + amount
-  });
-
-  // локальный топ
-  await update(ref(db, "groups/" + chatId + "/" + userId), {
-    name: username,
-    total: (await getLocalTotal()) + amount
-  });
-
-  document.getElementById("bagAmount").innerText = bag;
+async function getLocalTotal(){
+ const s=await get(ref(db,"groups/"+chatId+"/"+userId+"/total"));
+ return s.exists()?s.val():0;
 }
 
-async function getTotal() {
-  const s = await get(ref(db, "users/" + userId + "/total"));
-  return s.exists() ? s.val() : 0;
-}
+/* ТОПЫ */
+window.showGlobalTop=async()=>{
+ const snap=await get(ref(db,"users"));
+ let list=[];
+ snap.forEach(u=>{
+   const d=u.val();
+   list.push({name:d.name,total:d.total||0});
+ });
+ list.sort((a,b)=>b.total-a.total);
 
-async function getLocalTotal() {
-  const s = await get(ref(db, "groups/" + chatId + "/" + userId + "/total"));
-  return s.exists() ? s.val() : 0;
-}
+ let text="";
+ list.slice(0,10).forEach((p,i)=>{
+   text+=`${i+1}. ${p.name} — ${p.total}\n`;
+ });
 
-/* --- ПОКАЗ ТОПОВ --- */
-async function showGlobalTop() {
-  const snap = await get(ref(db, "users"));
-  let list = [];
+ document.getElementById("topResult").innerText=text||"Пусто";
+};
 
-  snap.forEach(u => {
-    const data = u.val();
-    list.push({ name: data.name, total: data.total || 0 });
-  });
+window.showLocalTop=async()=>{
+ const snap=await get(ref(db,"groups/"+chatId));
+ let list=[];
+ snap.forEach(u=>{
+   const d=u.val();
+   list.push({name:d.name,total:d.total||0});
+ });
+ list.sort((a,b)=>b.total-a.total);
 
-  list.sort((a,b)=>b.total-a.total);
+ let text="";
+ list.slice(0,10).forEach((p,i)=>{
+   text+=`${i+1}. ${p.name} — ${p.total}\n`;
+ });
 
-  let text = "🏆 Глобальный топ\n\n";
-  list.slice(0,10).forEach((p,i)=>{
-    text += `${i+1}. ${p.name} — ${p.total}\n`;
-  });
-
-  alert(text);
-}
-
-async function showLocalTop() {
-  const snap = await get(ref(db, "groups/" + chatId));
-  let list = [];
-
-  snap.forEach(u => {
-    const data = u.val();
-    list.push({ name: data.name, total: data.total || 0 });
-  });
-
-  list.sort((a,b)=>b.total-a.total);
-
-  let text = "👥 Топ группы\n\n";
-  list.slice(0,10).forEach((p,i)=>{
-    text += `${i+1}. ${p.name} — ${p.total}\n`;
-  });
-
-  alert(text);
-}
-
-window.saveWin = saveWin;
-window.showGlobalTop = showGlobalTop;
-window.showLocalTop = showLocalTop;
-window.onload = loadBag;
+ document.getElementById("topResult").innerText=text||"Пусто";
+};
 </script>
-
-<script>
-async function showGlobalTop() {
-    const snapshot = await db.ref("players").orderByChild("total").limitToLast(10).once("value");
-
-    let text = "";
-    snapshot.forEach(child => {
-        const data = child.val();
-        text = `${data.name}: ${data.total}\n` + text;
-    });
-
-    document.getElementById("topList").innerText = text || "Пока пусто";
-}
-
-async function showLocalTop() {
-    const chatId = Telegram.WebApp.initDataUnsafe?.chat?.id || "private";
-
-    const snapshot = await db.ref("groups/" + chatId).orderByChild("total").limitToLast(10).once("value");
-
-    let text = "";
-    snapshot.forEach(child => {
-        const data = child.val();
-        text = `${data.name}: ${data.total}\n` + text;
-    });
-
-    document.getElementById("topList").innerText = text || "Пока пусто";
-}
-</script>
-
-<script>
-function showLocalTop() {
-    document.getElementById("topResult").innerText =
-        "Топ группы скоро появится";
-}
-
-function showGlobalTop() {
-    document.getElementById("topResult").innerText =
-        "Глобальный топ скоро появится";
-}
-</script>
-    
 </body>
 </html>
