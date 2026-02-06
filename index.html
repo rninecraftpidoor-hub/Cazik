@@ -179,5 +179,75 @@ console.log("USER:", userId, username);
 console.log("CHAT:", chatId);
 </script>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBahw3ayFaEiqB6QFv1D3xWms-c",
+  authDomain: "cazik-959c0.firebaseapp.com",
+  databaseURL: "https://cazik-959c0-default-rtdb.firebaseio.com",
+  projectId: "cazik-959c0",
+  storageBucket: "cazik-959c0.firebasestorage.app",
+  messagingSenderId: "57672758285",
+  appId: "1:57672758285:web:02243883937c7ff8c01144"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const user = tg.initDataUnsafe?.user;
+
+let userId = user?.id || "offline";
+let username = user?.username || user?.first_name || "Player";
+
+let balance = 0;
+
+// ЗАГРУЗКА МЕШКА
+async function loadBalance() {
+  const snapshot = await get(ref(db, "users/" + userId));
+  if (snapshot.exists()) {
+    balance = snapshot.val().balance || 0;
+  } else {
+    await set(ref(db, "users/" + userId), {
+      name: username,
+      balance: 0
+    });
+    balance = 0;
+  }
+
+  updateBag();
+}
+
+// СОХРАНЕНИЕ
+async function saveBalance() {
+  await update(ref(db, "users/" + userId), {
+    balance: balance
+  });
+}
+
+// ПОКАЗ В МЕШКЕ
+function updateBag() {
+  const el = document.getElementById("bagAmount");
+  if (el) el.innerText = balance;
+}
+
+// ВЫИГРЫШ
+function addWin(amount) {
+  balance += amount;
+  updateBag();
+  saveBalance();
+}
+
+window.addWin = addWin;
+
+loadBalance();
+</script>
+
 </body>
 </html>
