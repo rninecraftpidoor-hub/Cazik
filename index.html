@@ -46,6 +46,7 @@ button {
     <button onclick="roll()">Кинуть кубики</button>
     <button onclick="openBag()">Проверить мешок</button>
     <button onclick="openTop()">Топ</button>
+    <button onclick="openLevel()">Уровень</button>
 </div>
 
 <div id="loading" class="screen">
@@ -80,6 +81,16 @@ button {
     <div class="big" id="topResult">Выбери тип топа</div>
 </div>
 
+<div id="level" class="screen">
+    <div class="header">
+        <button onclick="back()">← Назад</button>
+    </div>
+
+    <h2>⭐ Уровень</h2>
+    <div class="big" id="levelInfo">Загрузка...</div>
+    <button onclick="buyLevel()">Купить уровень</button>
+</div>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script type="module">
@@ -111,6 +122,8 @@ const chatId = chat?.id || "private";
 
 let currentWin = 0;
 let bag = 0;
+let level = 1;
+let multiplier = 1;
 
 /* UI */
 function show(id){
@@ -119,17 +132,29 @@ function show(id){
 }
 window.openBag=()=>show("bag");
 window.openTop=()=>show("top");
+window.openLevel=()=>{ show("level"); updateLevelUI(); };
 window.back=()=>show("menu");
 
-/* Загрузка баланса */
+/* Загрузка данных */
 async function loadBag(){
  const snap=await get(ref(db,"users/"+userId));
  if(snap.exists()){
-   bag=snap.val().bag||0;
+   const data=snap.val();
+   bag=data.bag||0;
+   level=data.level||1;
+   multiplier=data.multiplier||1;
  }else{
-   await set(ref(db,"users/"+userId),{name:username,bag:0,total:0});
+   await set(ref(db,"users/"+userId),{
+     name:username,
+     bag:0,
+     total:0,
+     level:1,
+     multiplier:1
+   });
  }
+
  document.getElementById("bagAmount").innerText=bag;
+ updateLevelUI();
 }
 loadBag();
 
@@ -139,7 +164,8 @@ window.roll=()=>{
  setTimeout(()=>{
   let d1=Math.floor(Math.random()*6)+1;
   let d2=Math.floor(Math.random()*6)+1;
-  currentWin=(d1+d2)*5;
+
+  currentWin=Math.floor((d1+d2)*5*multiplier);
 
   document.getElementById("diceResult").innerText=`Выпало: ${d1} и ${d2}`;
   document.getElementById("winResult").innerText=`Ты выиграл: ${currentWin}`;
@@ -154,6 +180,8 @@ window.takePrize=async()=>{
  await update(ref(db,"users/"+userId),{
    name:username,
    bag:bag,
+   level:level,
+   multiplier:multiplier,
    total:(await getTotal())+currentWin
  });
 
@@ -211,6 +239,46 @@ window.showLocalTop=async()=>{
 
  document.getElementById("topResult").innerText=text||"Пусто";
 };
+
+/* УРОВНИ */
+function levelPrice(){
+ return level*250;
+}
+
+function updateLevelUI(){
+ const el=document.getElementById("levelInfo");
+ if(!el) return;
+
+ el.innerText=
+`Уровень: ${level}
+Множитель: x${multiplier.toFixed(1)}
+Цена: ${levelPrice()}
+Баланс: ${bag}`;
+}
+
+window.buyLevel=async()=>{
+ const price=levelPrice();
+ if(bag<price){
+   alert("Не хватает денег");
+   return;
+ }
+
+ bag-=price;
+ level++;
+
+ if(level%2===0) multiplier+=0.2;
+ if(level%5===0) multiplier+=0.5;
+
+ await update(ref(db,"users/"+userId),{
+   bag:bag,
+   level:level,
+   multiplier:multiplier
+ });
+
+ document.getElementById("bagAmount").innerText=bag;
+ updateLevelUI();
+};
 </script>
 </body>
 </html>
+```0
