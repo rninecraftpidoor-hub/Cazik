@@ -25,6 +25,15 @@ button {
     border-radius:999px;
 }
 
+input{
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    margin:8px;
+    width:150px;
+    text-align:center;
+}
+
 .header { position:absolute; left:10px; top:10px; }
 
 .loader {
@@ -43,6 +52,9 @@ button {
 
 <div id="menu" class="screen active">
     <h2>🎲 Главное меню</h2>
+
+    <input id="bet" type="number" placeholder="Ставка">
+
     <button onclick="roll()">Кинуть кубики</button>
     <button onclick="openBag()">Проверить мешок</button>
     <button onclick="openTop()">Топ</button>
@@ -72,12 +84,9 @@ button {
     <div class="header">
         <button onclick="back()">← Назад</button>
     </div>
-
     <h2>🏆 Топ игроков</h2>
-
     <button onclick="showLocalTop()">Топ группы</button>
     <button onclick="showGlobalTop()">Глобальный топ</button>
-
     <div class="big" id="topResult">Выбери тип топа</div>
 </div>
 
@@ -85,7 +94,6 @@ button {
     <div class="header">
         <button onclick="back()">← Назад</button>
     </div>
-
     <h2>⭐ Уровень</h2>
     <div class="big" id="levelInfo">Загрузка...</div>
     <button onclick="buyLevel()">Купить уровень</button>
@@ -135,7 +143,7 @@ window.openTop=()=>show("top");
 window.openLevel=()=>{ show("level"); updateLevelUI(); };
 window.back=()=>show("menu");
 
-/* Загрузка данных */
+/* Загрузка */
 async function loadBag(){
  const snap=await get(ref(db,"users/"+userId));
  if(snap.exists()){
@@ -152,28 +160,53 @@ async function loadBag(){
      multiplier:1
    });
  }
-
  document.getElementById("bagAmount").innerText=bag;
  updateLevelUI();
 }
 loadBag();
 
-/* Кубики */
+/* КАЗИНО СО СТАВКАМИ */
 window.roll=()=>{
+ const bet = Number(document.getElementById("bet").value);
+
+ if(!bet || bet<=0){
+   alert("Введи ставку");
+   return;
+ }
+ if(bet>bag){
+   alert("Недостаточно денег");
+   return;
+ }
+
+ bag-=bet;
+ document.getElementById("bagAmount").innerText=bag;
+
  show("loading");
+
  setTimeout(()=>{
   let d1=Math.floor(Math.random()*6)+1;
   let d2=Math.floor(Math.random()*6)+1;
+  let sum=d1+d2;
 
-  currentWin=Math.floor((d1+d2)*5*multiplier);
+  if(sum<=6){
+    currentWin=0;
+    document.getElementById("winResult").innerText="Проигрыш 💀";
+  }
+  else if(sum<=9){
+    currentWin=Math.floor(bet*1.5*multiplier);
+    document.getElementById("winResult").innerText=`Выигрыш: ${currentWin}`;
+  }
+  else{
+    currentWin=Math.floor(bet*2.2*multiplier);
+    document.getElementById("winResult").innerText=`КРУПНЫЙ ВЫИГРЫШ: ${currentWin}`;
+  }
 
   document.getElementById("diceResult").innerText=`Выпало: ${d1} и ${d2}`;
-  document.getElementById("winResult").innerText=`Ты выиграл: ${currentWin}`;
   show("result");
  },1500);
 };
 
-/* Забрать приз */
+/* Забрать */
 window.takePrize=async()=>{
  bag+=currentWin;
 
@@ -199,7 +232,6 @@ async function getTotal(){
  const s=await get(ref(db,"users/"+userId+"/total"));
  return s.exists()?s.val():0;
 }
-
 async function getLocalTotal(){
  const s=await get(ref(db,"groups/"+chatId+"/"+userId+"/total"));
  return s.exists()?s.val():0;
