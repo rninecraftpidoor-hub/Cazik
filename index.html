@@ -101,8 +101,13 @@ button:hover {
     <div class="header">
         <button onclick="back()">← Назад</button>
     </div>
-    <h2>🏆 Топ</h2>
-    <div class="big">Скоро</div>
+
+    <h2>🏆 Топы</h2>
+
+    <button onclick="showLocalTop()">👥 Топ группы</button>
+    <button onclick="showGlobalTop()">🌍 Глобальный топ</button>
+
+    <div id="topList" class="big" style="margin-top:15px;"></div>
 </div>
 
 <script>
@@ -249,5 +254,148 @@ window.addWin = addWin;
 loadBalance();
 </script>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* --- FIREBASE --- */
+const firebaseConfig = {
+  apiKey: "ТВОЙ_API_KEY",
+  authDomain: "ТВОЙ_DOMAIN",
+  databaseURL: "ТВОЙ_DATABASE_URL",
+  projectId: "ТВОЙ_PROJECT_ID",
+  storageBucket: "ТВОЙ_BUCKET",
+  messagingSenderId: "ТВОЙ_ID",
+  appId: "ТВОЙ_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* --- TELEGRAM DATA --- */
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+const user = tg.initDataUnsafe?.user;
+const chat = tg.initDataUnsafe?.chat;
+
+const userId = user?.id || "offline";
+const username = user?.username || user?.first_name || "Player";
+const chatId = chat?.id || "private";
+
+/* --- БАЛАНС (МЕШОК) --- */
+let bag = 0;
+
+async function loadBag() {
+  const snapshot = await get(ref(db, "users/" + userId));
+  if (snapshot.exists()) {
+    bag = snapshot.val().bag || 0;
+  }
+  document.getElementById("bagAmount").innerText = bag;
+}
+
+async function saveWin(amount) {
+  bag += amount;
+
+  // сохраняем баланс
+  await update(ref(db, "users/" + userId), {
+    name: username,
+    bag: bag,
+    total: (await getTotal()) + amount
+  });
+
+  // локальный топ
+  await update(ref(db, "groups/" + chatId + "/" + userId), {
+    name: username,
+    total: (await getLocalTotal()) + amount
+  });
+
+  document.getElementById("bagAmount").innerText = bag;
+}
+
+async function getTotal() {
+  const s = await get(ref(db, "users/" + userId + "/total"));
+  return s.exists() ? s.val() : 0;
+}
+
+async function getLocalTotal() {
+  const s = await get(ref(db, "groups/" + chatId + "/" + userId + "/total"));
+  return s.exists() ? s.val() : 0;
+}
+
+/* --- ПОКАЗ ТОПОВ --- */
+async function showGlobalTop() {
+  const snap = await get(ref(db, "users"));
+  let list = [];
+
+  snap.forEach(u => {
+    const data = u.val();
+    list.push({ name: data.name, total: data.total || 0 });
+  });
+
+  list.sort((a,b)=>b.total-a.total);
+
+  let text = "🏆 Глобальный топ\n\n";
+  list.slice(0,10).forEach((p,i)=>{
+    text += `${i+1}. ${p.name} — ${p.total}\n`;
+  });
+
+  alert(text);
+}
+
+async function showLocalTop() {
+  const snap = await get(ref(db, "groups/" + chatId));
+  let list = [];
+
+  snap.forEach(u => {
+    const data = u.val();
+    list.push({ name: data.name, total: data.total || 0 });
+  });
+
+  list.sort((a,b)=>b.total-a.total);
+
+  let text = "👥 Топ группы\n\n";
+  list.slice(0,10).forEach((p,i)=>{
+    text += `${i+1}. ${p.name} — ${p.total}\n`;
+  });
+
+  alert(text);
+}
+
+window.saveWin = saveWin;
+window.showGlobalTop = showGlobalTop;
+window.showLocalTop = showLocalTop;
+window.onload = loadBag;
+</script>
+
+<script>
+async function showGlobalTop() {
+    const snapshot = await db.ref("players").orderByChild("total").limitToLast(10).once("value");
+
+    let text = "";
+    snapshot.forEach(child => {
+        const data = child.val();
+        text = `${data.name}: ${data.total}\n` + text;
+    });
+
+    document.getElementById("topList").innerText = text || "Пока пусто";
+}
+
+async function showLocalTop() {
+    const chatId = Telegram.WebApp.initDataUnsafe?.chat?.id || "private";
+
+    const snapshot = await db.ref("groups/" + chatId).orderByChild("total").limitToLast(10).once("value");
+
+    let text = "";
+    snapshot.forEach(child => {
+        const data = child.val();
+        text = `${data.name}: ${data.total}\n` + text;
+    });
+
+    document.getElementById("topList").innerText = text || "Пока пусто";
+}
+</script>
+   
 </body>
 </html>
