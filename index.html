@@ -248,6 +248,41 @@ async function getLocalTotal(){
  return s.exists()?s.val():0;
 }
 
+/* ТОПЫ */
+window.showGlobalTop=async()=>{
+ const snap=await get(ref(db,"users"));
+ let list=[];
+ snap.forEach(u=>{
+   const d=u.val();
+   list.push({name:d.name,total:d.total||0});
+ });
+ list.sort((a,b)=>b.total-a.total);
+
+ let text="";
+ list.slice(0,10).forEach((p,i)=>{
+   text+=`${i+1}. ${p.name} — ${p.total}\n`;
+ });
+
+ document.getElementById("topResult").innerText=text||"Пусто";
+};
+
+window.showLocalTop=async()=>{
+ const snap=await get(ref(db,"groups/"+chatId));
+ let list=[];
+ snap.forEach(u=>{
+   const d=u.val();
+   list.push({name:d.name,total:d.total||0});
+ });
+ list.sort((a,b)=>b.total-a.total);
+
+ let text="";
+ list.slice(0,10).forEach((p,i)=>{
+   text+=`${i+1}. ${p.name} — ${p.total}\n`;
+ });
+
+ document.getElementById("topResult").innerText=text||"Пусто";
+};
+    
 /* ПРОМОКОДЫ */
 window.usePromo=async()=>{
  const code=document.getElementById("promoInput").value.trim().toUpperCase();
