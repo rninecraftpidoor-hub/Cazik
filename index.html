@@ -97,20 +97,20 @@ button:hover {
 </div>
 
 <!-- ТОП -->
+<!-- ТОП -->
 <div id="top" class="screen">
     <div class="header">
         <button onclick="back()">← Назад</button>
     </div>
 
-    <h2>🏆 Топы</h2>
+    <h2>🏆 Топ игроков</h2>
 
-    <button onclick="showLocalTop()">👥 Топ группы</button>
-    <button onclick="showGlobalTop()">🌍 Глобальный топ</button>
+    <button onclick="showLocalTop()">Топ группы</button>
+    <button onclick="showGlobalTop()">Глобальный топ</button>
 
-    <div id="topList" class="big" style="margin-top:15px;"></div>
+    <div class="big" id="topResult">Выбери тип топа</div>
 </div>
 
-<script>
 let currentWin = 0;
 
 function show(id) {
@@ -401,6 +401,18 @@ function openTop() {
     hideAll();
     document.getElementById('top').classList.add('active');
 }
-   
+
+<script>
+function showLocalTop() {
+    document.getElementById("topResult").innerText =
+        "Топ группы скоро появится";
+}
+
+function showGlobalTop() {
+    document.getElementById("topResult").innerText =
+        "Глобальный топ скоро появится";
+}
+</script>
+    
 </body>
 </html>
