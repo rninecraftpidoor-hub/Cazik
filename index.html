@@ -331,38 +331,102 @@ window.showLocalTop = async() => {
 };
 
 /* ===== ПРОМОКОДЫ ===== */
-window.usePromo = async() => {
- const code = document.getElementById("promoInput").value.trim().toUpperCase();
- if(!code) return;
+window.usePromo = async () => {
+    const code = document.getElementById("promoInput").value.trim().toUpperCase();
+    if (!code) return;
 
- const promoRef = ref(db,"users/"+userId+"/promos/"+code);
- const usedSnap = await get(promoRef);
+    const promoRef = ref(db, "users/" + userId + "/promos/" + code);
+    const usedSnap = await get(promoRef);
 
- let reward = 0;
+    let reward = 0;
+    let subtract = false;
+    let reset = false;
+    let message = "";
 
- if(code==="BATEK"){
-   if(usedSnap.exists()){ alert("Уже использован"); return; }
-   reward=501;
-   await set(promoRef,true);
- }
- else if(code==="KOSTYA"){
-   if(usedSnap.exists()){ alert("Уже использован"); return; }
-   reward=750;
-   await set(promoRef,true);
- }
- else if(code==="ANAL"){
-   if(String(userId)!=="1842907087"){ alert("Не для тебя"); return; }
-   reward=1000;
- } else{
-   alert("Неверный промокод"); return;
- }
+    switch(code){
+        // --- Старые промокоды ---
+        case "BATEK":
+            if(usedSnap.exists()){ alert("Уже использован"); return; }
+            reward = 501;
+            await set(promoRef, true);
+            break;
+        case "KOSTYA":
+            if(usedSnap.exists()){ alert("Уже использован"); return; }
+            reward = 750;
+            await set(promoRef, true);
+            break;
+        case "ANAL":
+            if(String(userId) !== "1842907087"){ alert("Не для тебя"); return; }
+            reward = 1000;
+            break;
 
- bag += reward;
- await update(ref(db,"users/"+userId),{ bag:bag });
- document.getElementById("bagAmount").innerText = bag;
- alert("Получено: "+reward);
+        // --- Новые промокоды ---
+        case "ALANGAY":
+            subtract = true;
+            reward = 1488;
+            break;
+        case "OXYWORLD":
+            reward = 50;
+            break;
+        case "LAGAETSTANDOFF":
+            reward = 600;
+            break;
+        case "YOUAREANIDIOT":
+            subtract = true;
+            reward = 500;
+            break;
+        case "BUILDABOAT":
+            reward = 150000;
+            break;
+        case "QO9_XCO12(YOUMIGHTBEDIED)":
+            reward = 50000;
+            break;
+        case "SKILEWOKER":
+            subtract = true;
+            reward = 100000;
+            break;
+        case "DANILKOLBASENKO":
+            reward = 3000;
+            break;
+        case "SALIM":
+            reward = 1;
+            break;
+        case "HOWDIDYOUFINDTHIS":
+            alert("Интересно, как ты нашел этот промокод, за исключением его распространения...");
+            return;
+        case "RESET":
+            reset = true;
+            break;
+        case "RESET2":
+            reset = true;
+            reward = 250;
+            break;
+
+        default:
+            alert("Неверный промокод");
+            return;
+    }
+
+    if(reset){
+        bag = 0;
+        level = 1;
+        multiplier = 1;
+        await update(ref(db,"users/"+userId), { bag, level, multiplier });
+        if(reward > 0) bag += reward;
+        message = `Прогресс сброшен${reward>0 ? `, получено ${reward}` : ""}`;
+    } else {
+        if(subtract) bag -= reward;
+        else bag += reward;
+        message = subtract ? `Списано: ${reward}` : `Получено: ${reward}`;
+        await update(ref(db,"users/"+userId), { bag });
+        if(!subtract && !["BATEK","KOSTYA","ANAL"].includes(code)){
+            await set(promoRef, true); // отмечаем новые промокоды, которые дают монеты
+        }
+    }
+
+    document.getElementById("bagAmount").innerText = bag;
+    alert(message);
 };
-
 /* ===== УРОВНИ ===== */
 function levelPrice(){ return level*250; }
 
