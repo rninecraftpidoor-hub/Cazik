@@ -195,54 +195,66 @@ async function loadBag(){
 loadBag();
 
 /* ===== ТРЕЙДЫ ===== */
-window.addEventListener("DOMContentLoaded", () => {
-    let tradeEnabled = true;
+function toggleTrades() {
+    tradeEnabled = !tradeEnabled;
+    document.getElementById("tradeStatus").innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
+}
 
-    const tradeToggleBtn = document.getElementById("tradeToggleBtn");
-    const tradeSendBtn = document.getElementById("tradeSendBtn");
+async function sendTrade() {
+    if(!tradeEnabled){ 
+        alert("Трейды сейчас отключены"); 
+        return; 
+    }
 
-    tradeToggleBtn.addEventListener("click", () => {
-        tradeEnabled = !tradeEnabled;
-        tradeToggleBtn.innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
+    const targetName = document.getElementById("tradeUser").value.trim();
+    const amount = Number(document.getElementById("tradeAmount").value);
+
+    if(!targetName || !amount || amount <= 0){ 
+        alert("Введите игрока и сумму"); 
+        return; 
+    }
+
+    if(amount > bag){ 
+        alert("Недостаточно денег"); 
+        return; 
+    }
+
+    // Поиск игрока в группе
+    const groupSnap = await get(ref(db,"groups/"+chatId));
+    let targetId = null;
+    groupSnap.forEach(u => {
+        if(u.val().name.toLowerCase().trim() === targetName.toLowerCase()) targetId = u.key;
     });
 
-    tradeSendBtn.addEventListener("click", async () => {
-        if(!tradeEnabled){ alert("Трейды сейчас отключены"); return; }
+    if(!targetId){ 
+        alert("Игрок не найден"); 
+        return; 
+    }
 
-        const targetName = document.getElementById("tradeUser").value.trim();
-        const amount = Number(document.getElementById("tradeAmount").value);
+    try {
+        // Получаем текущий баланс получателя
+        const targetSnap = await get(ref(db,"users/"+targetId));
+        let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
 
-        if(!targetName || !amount || amount <= 0){ alert("Введите игрока и сумму"); return; }
-        if(amount > bag){ alert("Недостаточно денег"); return; }
+        // Списание у отправителя
+        bag -= amount;
+        await update(ref(db,"users/"+userId), { bag: bag });
 
-        try {
-            const groupSnap = await get(ref(db,"groups/"+chatId));
-            let targetId = null;
-            groupSnap.forEach(u => {
-                if(u.val().name === targetName) targetId = u.key;
-            });
+        // Пополнение у получателя
+        await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
 
-            if(!targetId){ alert("Игрок не найден"); return; }
+        // Обновляем интерфейс
+        document.getElementById("bagAmount").innerText = bag;
+        document.getElementById("tradeResult").innerText = `✅ Трейд успешно: ${amount} → ${targetName}`;
 
-            // Списываем у себя
-            bag -= amount;
-            await update(ref(db,"users/"+userId), { bag: bag });
-
-            // Добавляем получателю
-            const targetSnap = await get(ref(db,"users/"+targetId));
-            let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
-            await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
-
-            // Обновляем UI
-            document.getElementById("bagAmount").innerText = bag;
-            document.getElementById("tradeResult").innerText = `✅ Трейд успешно: ${amount} → ${targetName}`;
-
-        } catch(e){
-            console.error(e);
-            alert("Ошибка при отправке трейда");
-        }
-    });
-});
+        // Очищаем поля ввода для удобства
+        document.getElementById("tradeUser").value = "";
+        document.getElementById("tradeAmount").value = "";
+    } catch(err){
+        alert("❌ Ошибка при отправке трейда. Деньги не списаны.");
+        console.error(err);
+    }
+}
 /* ===== КАЗИНО ===== */
 window.roll = async() => {
  const bet = Number(document.getElementById("bet").value);
