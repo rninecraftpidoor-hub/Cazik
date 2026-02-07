@@ -50,6 +50,7 @@ input{
 </head>
 <body>
 
+<!-- ========== MENU ========== -->
 <div id="menu" class="screen active">
     <h2>🎲 Главное меню</h2>
 
@@ -64,19 +65,23 @@ input{
     <button onclick="openBag()">Проверить мешок</button>
     <button onclick="openTop()">Топ</button>
     <button onclick="openLevel()">Уровень</button>
+    <button onclick="openTrades()">Трейды</button>
 </div>
 
+<!-- ========== LOADING ========== -->
 <div id="loading" class="screen">
     <div class="loader"></div>
     <div>Крутим кубики...</div>
 </div>
 
+<!-- ========== RESULT ========== -->
 <div id="result" class="screen">
     <div class="big" id="diceResult"></div>
     <div class="big" id="winResult"></div>
     <button onclick="takePrize()">Забрать приз</button>
 </div>
 
+<!-- ========== BAG ========== -->
 <div id="bag" class="screen">
     <div class="header">
         <button onclick="back()">← Назад</button>
@@ -85,6 +90,7 @@ input{
     <div class="big" id="bagAmount">0</div>
 </div>
 
+<!-- ========== TOP ========== -->
 <div id="top" class="screen">
     <div class="header">
         <button onclick="back()">← Назад</button>
@@ -95,6 +101,7 @@ input{
     <div class="big" id="topResult">Выбери тип топа</div>
 </div>
 
+<!-- ========== LEVEL ========== -->
 <div id="level" class="screen">
     <div class="header">
         <button onclick="back()">← Назад</button>
@@ -102,6 +109,26 @@ input{
     <h2>⭐ Уровень</h2>
     <div class="big" id="levelInfo">Загрузка...</div>
     <button onclick="buyLevel()">Купить уровень</button>
+</div>
+
+<!-- ========== TRADES ========== -->
+<div id="trades" class="screen">
+    <div class="header">
+        <button onclick="back()">← Назад</button>
+    </div>
+    <h2>💱 Трейды</h2>
+
+    <button onclick="toggleTrades()" style="margin-bottom:12px;">
+        <span id="tradeStatus">Трейды включены</span>
+    </button>
+
+    <div style="margin-top:12px;">
+        <input id="tradeUser" type="text" placeholder="Юзернейм игрока">
+        <input id="tradeAmount" type="number" placeholder="Сумма">
+        <button onclick="sendTrade()">Отправить трейд</button>
+    </div>
+
+    <div id="tradeResult" class="big" style="margin-top:20px;"></div>
 </div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -137,8 +164,9 @@ let currentWin = 0;
 let bag = 0;
 let level = 1;
 let multiplier = 1;
+let tradeEnabled = true;
 
-/* UI */
+/* ====== UI ====== */
 function show(id){
  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
  document.getElementById(id).classList.add("active");
@@ -146,9 +174,10 @@ function show(id){
 window.openBag=()=>show("bag");
 window.openTop=()=>show("top");
 window.openLevel=()=>{ show("level"); updateLevelUI(); };
+window.openTrades=()=>show("trades");
 window.back=()=>show("menu");
 
-/* Загрузка */
+/* ====== LOAD BAG ====== */
 async function loadBag(){
  const snap=await get(ref(db,"users/"+userId));
  if(snap.exists()){
@@ -169,6 +198,43 @@ async function loadBag(){
  updateLevelUI();
 }
 loadBag();
+
+/* ====== TRADES ====== */
+function toggleTrades(){
+    tradeEnabled = !tradeEnabled;
+    document.getElementById("tradeStatus").innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
+}
+
+async function sendTrade(){
+    if(!tradeEnabled){ alert("Трейды отключены"); return; }
+
+    const targetName = document.getElementById("tradeUser").value.trim();
+    const amount = Number(document.getElementById("tradeAmount").value);
+
+    if(!targetName || !amount || amount <= 0){ alert("Введите игрока и сумму"); return; }
+    if(amount > bag){ alert("Недостаточно денег"); return; }
+
+    const groupSnap = await get(ref(db,"groups/"+chatId));
+    let targetId = null;
+    groupSnap.forEach(u => {
+        if(u.val().name === targetName) targetId = u.key;
+    });
+
+    if(!targetId){ alert("Игрок не найден"); return; }
+
+    bag -= amount;
+    await update(ref(db,"users/"+userId), { bag: bag });
+
+    const targetSnap = await get(ref(db,"users/"+targetId));
+    let targetBag = targetSnap.exists() ? (targetSnap.val().bag || 0) : 0;
+    await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
+
+    document.getElementById("bagAmount").innerText = bag;
+    document.getElementById("tradeResult").innerText = `Трейд успешно: ${amount} → ${targetName}`;
+
+    await loadBag();
+}
+
 
 /* КАЗИНО */
 window.roll=async()=>{
@@ -243,7 +309,7 @@ async function getTotal(){
  const s=await get(ref(db,"users/"+userId+"/total"));
  return s.exists()?s.val():0;
 }
-async function getLocalTotal(){
+async function getLocalTotal()
  const s=await get(ref(db,"groups/"+chatId+"/"+userId+"/total"));
  return s.exists()?s.val():0;
 }
