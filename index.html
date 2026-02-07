@@ -82,6 +82,24 @@ input{
 </div>  <div id="level" class="screen">  
     <div class="header">  
         <button onclick="back()">← Назад</button>  
+    <div id="trades" class="screen">
+  <div class="header">
+    <button onclick="back()">← Назад</button>
+  </div>
+  <h2>💱 Трейды</h2>
+  
+  <button onclick="toggleTrades()">
+    <span id="tradeStatus">Трейды включены</span>
+  </button>
+
+  <div style="margin-top:12px;">
+    <input id="tradeUser" type="text" placeholder="Юзернейм игрока">
+    <input id="tradeAmount" type="number" placeholder="Сумма">
+    <button onclick="sendTrade()">Отправить трейд</button>
+  </div>
+
+  <div id="tradeResult" class="big" style="margin-top:20px;"></div>
+    </div>
     </div>  
     <h2>⭐ Уровень</h2>  
     <div class="big" id="levelInfo">Загрузка...</div>  
