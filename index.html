@@ -114,14 +114,12 @@ input{
     </div>
     <h2>💱 Трейды</h2>
 
-    <button onclick="toggleTrades()" style="margin-bottom:12px;">
-        <span id="tradeStatus">Трейды включены</span>
-    </button>
+    <button id="tradeToggleBtn" style="margin-bottom:12px;">Трейды включены</button>
 
     <div style="margin-top:12px;">
         <input id="tradeUser" type="text" placeholder="Юзернейм игрока">
         <input id="tradeAmount" type="number" placeholder="Сумма">
-        <button onclick="sendTrade()">Отправить трейд</button>
+        <button id="tradeSendBtn">Отправить трейд</button>
     </div>
 
     <div id="tradeResult" class="big" style="margin-top:20px;"></div>
@@ -199,72 +197,50 @@ loadBag();
 /* ===== ТРЕЙДЫ ===== */
 let tradeEnabled = true;
 
-// Переключение состояния трейдов
-function toggleTrades() {
-    tradeEnabled = !tradeEnabled;
-    document.getElementById("tradeStatus").innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
-}
+const tradeToggleBtn = document.getElementById("tradeToggleBtn");
+const tradeSendBtn = document.getElementById("tradeSendBtn");
 
-// Отправка трейда другому игроку
-async function sendTrade() {
-    if(!tradeEnabled){
-        alert("Трейды сейчас отключены");
-        return;
-    }
+tradeToggleBtn.addEventListener("click", () => {
+    tradeEnabled = !tradeEnabled;
+    tradeToggleBtn.innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
+});
+
+tradeSendBtn.addEventListener("click", async () => {
+    if(!tradeEnabled){ alert("Трейды сейчас отключены"); return; }
 
     const targetName = document.getElementById("tradeUser").value.trim();
     const amount = Number(document.getElementById("tradeAmount").value);
 
-    if(!targetName){
-        alert("Введите имя игрока");
-        return;
+    if(!targetName || !amount || amount <= 0){ alert("Введите игрока и сумму"); return; }
+    if(amount > bag){ alert("Недостаточно денег"); return; }
+
+    try {
+        const groupSnap = await get(ref(db,"groups/"+chatId));
+        let targetId = null;
+        groupSnap.forEach(u => {
+            if(u.val().name === targetName) targetId = u.key;
+        });
+
+        if(!targetId){ alert("Игрок не найден"); return; }
+
+        // Списываем у себя
+        bag -= amount;
+        await update(ref(db,"users/"+userId), { bag: bag });
+
+        // Добавляем получателю
+        const targetSnap = await get(ref(db,"users/"+targetId));
+        let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
+        await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
+
+        // Обновляем UI
+        document.getElementById("bagAmount").innerText = bag;
+        document.getElementById("tradeResult").innerText = `✅ Трейд успешно: ${amount} → ${targetName}`;
+
+    } catch(e){
+        console.error(e);
+        alert("Ошибка при отправке трейда");
     }
-    if(!amount || amount <= 0){
-        alert("Введите корректную сумму");
-        return;
-    }
-    if(amount > bag){
-        alert("Недостаточно денег для трейда");
-        return;
-    }
-
-    // Получаем всех пользователей в группе
-    const groupSnap = await get(ref(db,"groups/"+chatId));
-    if(!groupSnap.exists()){
-        alert("Нет других игроков в группе");
-        return;
-    }
-
-    let targetId = null;
-    groupSnap.forEach(u => {
-        if(u.val().name === targetName){
-            targetId = u.key;
-        }
-    });
-
-    if(!targetId){
-        alert("Игрок не найден");
-        return;
-    }
-
-    // Списываем монеты у отправителя
-    bag -= amount;
-    await update(ref(db,"users/"+userId), { bag });
-
-    // Добавляем монеты получателю
-    const targetSnap = await get(ref(db,"users/"+targetId));
-    let targetBag = targetSnap.exists() ? (targetSnap.val().bag || 0) : 0;
-    targetBag += amount;
-    await update(ref(db,"users/"+targetId), { bag: targetBag });
-
-    // Обновляем интерфейс
-    document.getElementById("bagAmount").innerText = bag;
-    document.getElementById("tradeResult").innerText = `✅ Трейд успешен: ${amount} → ${targetName}`;
-    
-    // Чистим поля ввода
-    document.getElementById("tradeUser").value = "";
-    document.getElementById("tradeAmount").value = "";
-}
+});
     
 /* ===== КАЗИНО ===== */
 window.roll = async() => {
