@@ -1,98 +1,152 @@
-<!DOCTYPE html>  <html lang="ru">    <head>    
-<meta charset="UTF-8">    
-<title>Dice Game</title>    
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  <style>    
-body {    
-    margin: 0;    
-    font-family: Arial, sans-serif;    
-    background: linear-gradient(135deg, #1e1e2f, #2a2a40);    
-    color: white;    
-}    
-.screen { display:none; padding:20px; text-align:center; }    
-.active { display:block; }    button {
-background:#3b82f6;
-border:none;
-padding:14px 22px;
-margin:8px;
-color:white;
-font-size:16px;
-border-radius:999px;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Dice Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+    color: white;
+}
+.screen { display:none; padding:20px; text-align:center; }
+.active { display:block; }
+
+button {
+    background:#3b82f6;
+    border:none;
+    padding:14px 22px;
+    margin:8px;
+    color:white;
+    font-size:16px;
+    border-radius:999px;
 }
 
 input{
-padding:12px;
-border-radius:12px;
-border:none;
-margin:8px;
-width:150px;
-text-align:center;
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    margin:8px;
+    width:150px;
+    text-align:center;
 }
 
 .header { position:absolute; left:10px; top:10px; }
 
 .loader {
-width:60px;height:60px;
-border:6px solid #ffffff30;
-border-top:6px solid white;
-border-radius:50%;
-margin:40px auto;
-animation:spin 1s linear infinite;
+    width:60px;height:60px;
+    border:6px solid #ffffff30;
+    border-top:6px solid white;
+    border-radius:50%;
+    margin:40px auto;
+    animation:spin 1s linear infinite;
 }
 @keyframes spin {100%{transform:rotate(360deg);}}
 .big{font-size:28px;margin:20px;}
-</style>  </head>
+</style>
+</head>
+<body>
 
-<body>  <div id="menu" class="screen active">    
-    <h2>🎲 Главное меню</h2>  <input id="bet" type="number" placeholder="Ставка">    <input id="promoInput" type="text" placeholder="Промокод">    
-<button onclick="usePromo()">Активировать</button>    <br>    <button onclick="roll()">Кинуть кубики</button>
-<button onclick="openBag()">Проверить мешок</button>
-<button onclick="openTop()">Топ</button>
-<button onclick="openLevel()">Уровень</button>
-<button onclick="openTrades()">Трейды</button>
+<!-- ========== МЕНЮ ========== -->
+<div id="menu" class="screen active">
+    <h2>🎲 Главное меню</h2>
+    <input id="bet" type="number" placeholder="Ставка">
+    <input id="promoInput" type="text" placeholder="Промокод">
+    <button onclick="usePromo()">Активировать</button>
+    <br>
+    <button onclick="roll()">Кинуть кубики</button>
+    <button onclick="openBag()">Проверить мешок</button>
+    <button onclick="openTop()">Топ</button>
+    <button onclick="openLevel()">Уровень</button>
+    <button onclick="openTrades()">Трейды</button>
+</div>
 
-</div>  <div id="loading" class="screen">    
-    <div class="loader"></div>    
-    <div>Крутим кубики...</div>    
-</div>  <div id="result" class="screen">    
-    <div class="big" id="diceResult"></div>    
-    <div class="big" id="winResult"></div>    
-    <button onclick="takePrize()">Забрать приз</button>    
-</div>  <div id="bag" class="screen">    
-    <div class="header">    
-        <button onclick="back()">← Назад</button>    
-    </div>    
-    <h2>👜 Твой мешок</h2>    
-    <div class="big" id="bagAmount">0</div>    
-</div>  <div id="top" class="screen">    
-    <div class="header">    
-        <button onclick="back()">← Назад</button>    
-    </div>    
-    <h2>🏆 Топ игроков</h2>    
-    <button onclick="showLocalTop()">Топ группы</button>    
-    <button onclick="showGlobalTop()">Глобальный топ</button>    
-    <div class="big" id="topResult">Выбери тип топа</div>    
-</div>  <div id="level" class="screen">    
-    <div class="header">    
-        <button onclick="back()">← Назад</button>    </div>   
-<h2>⭐ Уровень</h2>    
-<div class="big" id="levelInfo">Загрузка...</div>    
-<button onclick="buyLevel()">Купить уровень</button>
+<!-- ========== ЗАГРУЗКА ========== -->
+<div id="loading" class="screen">
+    <div class="loader"></div>
+    <div>Крутим кубики...</div>
+</div>
 
-</div>  <script src="https://telegram.org/js/telegram-web-app.js"></script>  <script type="module">    
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";    
-import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";    const firebaseConfig = {
-apiKey: "AIzaSyCBahw3ayFaEiqB6QFv1D3xWms-c",
-authDomain: "cazik-959c0.firebaseapp.com",
-databaseURL: "https://cazik-959c0-default-rtdb.firebaseio.com",
-projectId: "cazik-959c0",
-storageBucket: "cazik-959c0.firebasestorage.app",
-messagingSenderId: "57672758285",
-appId: "1:57672758285:web:02243883937c7ff8c01144"
+<!-- ========== РЕЗУЛЬТАТ ========== -->
+<div id="result" class="screen">
+    <div class="big" id="diceResult"></div>
+    <div class="big" id="winResult"></div>
+    <button onclick="takePrize()">Забрать приз</button>
+</div>
+
+<!-- ========== МЕШОК ========== -->
+<div id="bag" class="screen">
+    <div class="header">
+        <button onclick="back()">← Назад</button>
+    </div>
+    <h2>👜 Твой мешок</h2>
+    <div class="big" id="bagAmount">0</div>
+</div>
+
+<!-- ========== ТОП ========== -->
+<div id="top" class="screen">
+    <div class="header">
+        <button onclick="back()">← Назад</button>
+    </div>
+    <h2>🏆 Топ игроков</h2>
+    <button onclick="showLocalTop()">Топ группы</button>
+    <button onclick="showGlobalTop()">Глобальный топ</button>
+    <div class="big" id="topResult">Выбери тип топа</div>
+</div>
+
+<!-- ========== УРОВЕНЬ ========== -->
+<div id="level" class="screen">
+    <div class="header">
+        <button onclick="back()">← Назад</button>
+    </div>
+    <h2>⭐ Уровень</h2>
+    <div class="big" id="levelInfo">Загрузка...</div>
+    <button onclick="buyLevel()">Купить уровень</button>
+</div>
+
+<!-- ========== ТРЕЙДЫ ========== -->
+<div id="trades" class="screen">
+    <div class="header">
+        <button onclick="back()">← Назад</button>
+    </div>
+    <h2>💱 Трейды</h2>
+
+    <button onclick="toggleTrades()" style="margin-bottom:12px;">
+        <span id="tradeStatus">Трейды включены</span>
+    </button>
+
+    <div style="margin-top:12px;">
+        <input id="tradeUser" type="text" placeholder="Юзернейм игрока">
+        <input id="tradeAmount" type="number" placeholder="Сумма">
+        <button onclick="sendTrade()">Отправить трейд</button>
+    </div>
+
+    <div id="tradeResult" class="big" style="margin-top:20px;"></div>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBahw3ayFaEiqB6QFv1D3xWms-c",
+  authDomain: "cazik-959c0.firebaseapp.com",
+  databaseURL: "https://cazik-959c0-default-rtdb.firebaseio.com",
+  projectId: "cazik-959c0",
+  storageBucket: "cazik-959c0.firebasestorage.app",
+  messagingSenderId: "57672758285",
+  appId: "1:57672758285:web:02243883937c7ff8c01144"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Telegram Web App
 const tg = window.Telegram.WebApp;
 tg.expand();
 
@@ -107,279 +161,242 @@ let currentWin = 0;
 let bag = 0;
 let level = 1;
 let multiplier = 1;
+let tradeEnabled = true;
 
-<!-- ================= ЭКРАН ТРЕЙДОВ ================= -->  <div id="trades" class="screen">  
-    <div class="header">  
-        <button onclick="back()">← Назад</button>  
-    </div>  
-    <h2>💱 Трейды</h2>  <button onclick="toggleTrades()" style="margin-bottom:12px;">  
-    <span id="tradeStatus">Трейды включены</span>  
-</button>  
-
-<div style="margin-top:12px;">  
-    <input id="tradeUser" type="text" placeholder="Юзернейм игрока">  
-    <input id="tradeAmount" type="number" placeholder="Сумма">  
-    <button onclick="sendTrade()">Отправить трейд</button>  
-</div>  
-
-<div id="tradeResult" class="big" style="margin-top:20px;"></div>
-
-</div>  /* UI */
+/* ===== UI ===== */
 function show(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
 }
-window.openBag=()=>show("bag");
-window.openTop=()=>show("top");
-window.openLevel=()=>{ show("level"); updateLevelUI(); };
-window.back=()=>show("menu");
+window.openBag = () => show("bag");
+window.openTop = () => show("top");
+window.openLevel = () => { show("level"); updateLevelUI(); };
+window.openTrades = () => show("trades");
+window.back = () => show("menu");
 
-/* Загрузка */
+/* ===== Загрузка данных ===== */
 async function loadBag(){
-const snap=await get(ref(db,"users/"+userId));
-if(snap.exists()){
-const data=snap.val();
-bag=data.bag||0;
-level=data.level||1;
-multiplier=data.multiplier||1;
-}else{
-await set(ref(db,"users/"+userId),{
-name:username,
-bag:0,
-total:0,
-level:1,
-multiplier:1
-});
-}
-document.getElementById("bagAmount").innerText=bag;
-updateLevelUI();
+ const snap = await get(ref(db,"users/"+userId));
+ if(snap.exists()){
+   const data = snap.val();
+   bag = data.bag || 0;
+   level = data.level || 1;
+   multiplier = data.multiplier || 1;
+ } else {
+   await set(ref(db,"users/"+userId),{
+     name: username,
+     bag: 0,
+     total: 0,
+     level: 1,
+     multiplier: 1
+   });
+ }
+ document.getElementById("bagAmount").innerText = bag;
+ updateLevelUI();
 }
 loadBag();
 
-let tradeEnabled = true;
-
-// открытие экрана трейдов
-window.openTrades = () => show("trades");
-
-// включение/выключение трейдов
+/* ===== ТРЕЙДЫ ===== */
 function toggleTrades() {
-tradeEnabled = !tradeEnabled;
-document.getElementById("tradeStatus").innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
+    tradeEnabled = !tradeEnabled;
+    document.getElementById("tradeStatus").innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
 }
 
-// отправка трейда
 async function sendTrade() {
-if(!tradeEnabled) { alert("Трейды сейчас отключены"); return; }
+    if(!tradeEnabled){ alert("Трейды сейчас отключены"); return; }
 
-const targetName = document.getElementById("tradeUser").value.trim();  
-const amount = Number(document.getElementById("tradeAmount").value);  
+    const targetName = document.getElementById("tradeUser").value.trim();
+    const amount = Number(document.getElementById("tradeAmount").value);
 
-if(!targetName || !amount || amount <= 0){ alert("Введите игрока и сумму"); return; }  
-if(amount > bag){ alert("Недостаточно денег"); return; }  
+    if(!targetName || !amount || amount <= 0){ alert("Введите игрока и сумму"); return; }
+    if(amount > bag){ alert("Недостаточно денег"); return; }
 
-// ищем игрока в группе  
-const groupSnap = await get(ref(db,"groups/"+chatId));  
-let targetId = null;  
-groupSnap.forEach(u=>{  
-    if(u.val().name === targetName) targetId = u.key;  
-});  
+    const groupSnap = await get(ref(db,"groups/"+chatId));
+    let targetId = null;
+    groupSnap.forEach(u => {
+        if(u.val().name === targetName) targetId = u.key;
+    });
 
-if(!targetId){ alert("Игрок не найден"); return; }  
+    if(!targetId){ alert("Игрок не найден"); return; }
 
-// списываем у себя  
-bag -= amount;  
-await update(ref(db,"users/"+userId), { bag: bag });  
+    bag -= amount;
+    await update(ref(db,"users/"+userId), { bag: bag });
 
-// добавляем игроку  
-const targetSnap = await get(ref(db,"users/"+targetId));  
-let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;  
-await update(ref(db,"users/"+targetId), { bag: targetBag + amount });  
+    const targetSnap = await get(ref(db,"users/"+targetId));
+    let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
+    await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
 
-document.getElementById("bagAmount").innerText = bag;  
-document.getElementById("tradeResult").innerText = `Трейд успешно: ${amount} → ${targetName}`;
-
+    document.getElementById("bagAmount").innerText = bag;
+    document.getElementById("tradeResult").innerText = `Трейд успешно: ${amount} → ${targetName}`;
 }
 
-/* КАЗИНО */
-window.roll=async()=>{
-const bet=Number(document.getElementById("bet").value);
+/* ===== КАЗИНО ===== */
+window.roll = async() => {
+ const bet = Number(document.getElementById("bet").value);
 
-if(!bet||bet<=0){ alert("Введи ставку"); return; }
-if(bet>bag){ alert("Недостаточно денег"); return; }
+ if(!bet||bet<=0){ alert("Введи ставку"); return; }
+ if(bet>bag){ alert("Недостаточно денег"); return; }
 
-bag-=bet;
-document.getElementById("bagAmount").innerText=bag;
+ bag -= bet;
+ document.getElementById("bagAmount").innerText = bag;
 
-const totalNow=await getTotal();
-const localNow=await getLocalTotal();
+ const totalNow = await getTotal();
+ const localNow = await getLocalTotal();
 
-await update(ref(db,"users/"+userId),{
-bag:bag,
-total:totalNow-bet
-});
+ await update(ref(db,"users/"+userId),{
+   bag: bag,
+   total: totalNow - bet
+ });
 
-await update(ref(db,"groups/"+chatId+"/"+userId),{
-name:username,
-total:localNow-bet
-});
+ await update(ref(db,"groups/"+chatId+"/"+userId),{
+   name: username,
+   total: localNow - bet
+ });
 
-show("loading");
+ show("loading");
 
-setTimeout(()=>{
-let d1=Math.floor(Math.random()*6)+1;
-let d2=Math.floor(Math.random()*6)+1;
-let sum=d1+d2;
+ setTimeout(()=>{
+  let d1 = Math.floor(Math.random()*6)+1;
+  let d2 = Math.floor(Math.random()*6)+1;
+  let sum = d1 + d2;
 
-if(sum<=6){
-currentWin=0;
-document.getElementById("winResult").innerText="Проигрыш 💀";
-}
-else if(sum<=9){
-currentWin=Math.floor(bet1.5multiplier);
-document.getElementById("winResult").innerText=Выигрыш: ${currentWin};
-}
-else{
-currentWin=Math.floor(bet2.2multiplier);
-document.getElementById("winResult").innerText=КРУПНЫЙ ВЫИГРЫШ: ${currentWin};
-}
+  if(sum<=6){
+    currentWin = 0;
+    document.getElementById("winResult").innerText = "Проигрыш 💀";
+  } else if(sum<=9){
+    currentWin = Math.floor(bet*1.5*multiplier);
+    document.getElementById("winResult").innerText = `Выигрыш: ${currentWin}`;
+  } else {
+    currentWin = Math.floor(bet*2.2*multiplier);
+    document.getElementById("winResult").innerText = `КРУПНЫЙ ВЫИГРЫШ: ${currentWin}`;
+  }
 
-document.getElementById("diceResult").innerText=Выпало: ${d1} и ${d2};
-show("result");
-},1500);
+  document.getElementById("diceResult").innerText = `Выпало: ${d1} и ${d2}`;
+  show("result");
+ },1500);
 };
 
-window.takePrize=async()=>{
-bag+=currentWin;
+window.takePrize = async() => {
+ bag += currentWin;
 
-await update(ref(db,"users/"+userId),{
-name:username,
-bag:bag,
-level:level,
-multiplier:multiplier,
-total:(await getTotal())+currentWin
-});
+ await update(ref(db,"users/"+userId),{
+   name: username,
+   bag: bag,
+   level: level,
+   multiplier: multiplier,
+   total: (await getTotal()) + currentWin
+ });
 
-await update(ref(db,"groups/"+chatId+"/"+userId),{
-name:username,
-total:(await getLocalTotal())+currentWin
-});
+ await update(ref(db,"groups/"+chatId+"/"+userId),{
+   name: username,
+   total: (await getLocalTotal()) + currentWin
+ });
 
-document.getElementById("bagAmount").innerText=bag;
-currentWin=0;
-show("menu");
+ document.getElementById("bagAmount").innerText = bag;
+ currentWin = 0;
+ show("menu");
 };
 
-async function getTotal(){
-const s=await get(ref(db,"users/"+userId+"/total"));
-return s.exists()?s.val():0;
-}
-async function getLocalTotal()
-const s=await get(ref(db,"groups/"+chatId+"/"+userId+"/total"));
-return s.exists()?s.val():0;
+async function getTotal() {
+ const s = await get(ref(db,"users/"+userId+"/total"));
+ return s.exists()? s.val() : 0;
 }
 
-/* ТОПЫ */
-window.showGlobalTop=async()=>{
-const snap=await get(ref(db,"users"));
-let list=[];
-snap.forEach(u=>{
-const d=u.val();
-list.push({name:d.name,total:d.total||0});
-});
-list.sort((a,b)=>b.total-a.total);
+async function getLocalTotal() {
+ const s = await get(ref(db,"groups/"+chatId+"/"+userId+"/total"));
+ return s.exists()? s.val() : 0;
+}
 
-let text="";
-list.slice(0,10).forEach((p,i)=>{
-text+=${i+1}. ${p.name} — ${p.total}\n;
-});
+/* ===== ТОПЫ ===== */
+window.showGlobalTop = async() => {
+ const snap = await get(ref(db,"users"));
+ let list = [];
+ snap.forEach(u => { list.push({name:u.val().name, total:u.val().total||0}); });
+ list.sort((a,b)=>b.total-a.total);
 
-document.getElementById("topResult").innerText=text||"Пусто";
+ let text = "";
+ list.slice(0,10).forEach((p,i)=>{ text += `${i+1}. ${p.name} — ${p.total}\n`; });
+ document.getElementById("topResult").innerText = text || "Пусто";
 };
 
-window.showLocalTop=async()=>{
-const snap=await get(ref(db,"groups/"+chatId));
-let list=[];
-snap.forEach(u=>{
-const d=u.val();
-list.push({name:d.name,total:d.total||0});
-});
-list.sort((a,b)=>b.total-a.total);
+window.showLocalTop = async() => {
+ const snap = await get(ref(db,"groups/"+chatId));
+ let list = [];
+ snap.forEach(u => { list.push({name:u.val().name, total:u.val().total||0}); });
+ list.sort((a,b)=>b.total-a.total);
 
-let text="";
-list.slice(0,10).forEach((p,i)=>{
-text+=${i+1}. ${p.name} — ${p.total}\n;
-});
-
-document.getElementById("topResult").innerText=text||"Пусто";
+ let text = "";
+ list.slice(0,10).forEach((p,i)=>{ text += `${i+1}. ${p.name} — ${p.total}\n`; });
+ document.getElementById("topResult").innerText = text || "Пусто";
 };
 
-/* ПРОМОКОДЫ */
-window.usePromo=async()=>{
-const code=document.getElementById("promoInput").value.trim().toUpperCase();
-if(!code) return;
+/* ===== ПРОМОКОДЫ ===== */
+window.usePromo = async() => {
+ const code = document.getElementById("promoInput").value.trim().toUpperCase();
+ if(!code) return;
 
-const promoRef=ref(db,"users/"+userId+"/promos/"+code);
-const usedSnap=await get(promoRef);
+ const promoRef = ref(db,"users/"+userId+"/promos/"+code);
+ const usedSnap = await get(promoRef);
 
-let reward=0;
+ let reward = 0;
 
-if(code==="BATEK"){
-if(usedSnap.exists()){ alert("Уже использован"); return; }
-reward=501;
-await set(promoRef,true);
-}
-else if(code==="KOSTYA"){
-if(usedSnap.exists()){ alert("Уже использован"); return; }
-reward=750;
-await set(promoRef,true);
-}
-else if(code==="ANAL"){
-if(String(userId)!=="1842907087"){ alert("Не для тебя"); return; }
-reward=1000;
-}
-else{
-alert("Неверный промокод");
-return;
-}
+ if(code==="BATEK"){
+   if(usedSnap.exists()){ alert("Уже использован"); return; }
+   reward=501;
+   await set(promoRef,true);
+ }
+ else if(code==="KOSTYA"){
+   if(usedSnap.exists()){ alert("Уже использован"); return; }
+   reward=750;
+   await set(promoRef,true);
+ }
+ else if(code==="ANAL"){
+   if(String(userId)!=="1842907087"){ alert("Не для тебя"); return; }
+   reward=1000;
+ } else{
+   alert("Неверный промокод"); return;
+ }
 
-bag+=reward;
-
-await update(ref(db,"users/"+userId),{ bag:bag });
-
-document.getElementById("bagAmount").innerText=bag;
-alert("Получено: "+reward);
+ bag += reward;
+ await update(ref(db,"users/"+userId),{ bag:bag });
+ document.getElementById("bagAmount").innerText = bag;
+ alert("Получено: "+reward);
 };
 
-function levelPrice(){ return level250; }
+/* ===== УРОВНИ ===== */
+function levelPrice(){ return level*250; }
 
 function updateLevelUI(){
-const el=document.getElementById("levelInfo");
-if(!el) return;
+ const el = document.getElementById("levelInfo");
+ if(!el) return;
 
-el.innerText=
-Уровень: ${level}   Множитель: x${multiplier.toFixed(1)}   Цена: ${levelPrice()}   Баланс: ${bag};
+ el.innerText=
+`Уровень: ${level}
+Множитель: x${multiplier.toFixed(1)}
+Цена: ${levelPrice()}
+Баланс: ${bag}`;
 }
 
-window.buyLevel=async()=>{
-const price=levelPrice();
-if(bag<price){ alert("Не хватает денег"); return; }
+window.buyLevel = async() => {
+ const price = levelPrice();
+ if(bag < price){ alert("Не хватает денег"); return; }
 
-bag-=price;
-level++;
+ bag -= price;
+ level++;
 
-if(level%2===0) multiplier+=0.2;
-if(level%5===0) multiplier+=0.5;
+ if(level % 2 === 0) multiplier += 0.2;
+ if(level % 5 === 0) multiplier += 0.5;
 
-await update(ref(db,"users/"+userId),{
-bag:bag,
-level:level,
-multiplier:multiplier
-});
+ await update(ref(db,"users/"+userId),{
+   bag: bag,
+   level: level,
+   multiplier: multiplier
+ });
 
-document.getElementById("bagAmount").innerText=bag;
-updateLevelUI();
+ document.getElementById("bagAmount").innerText = bag;
+ updateLevelUI();
 };
 </script>
 
-</body>  
-</html>
+</body>
+    </html>
