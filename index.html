@@ -195,56 +195,64 @@ async function loadBag(){
 loadBag();
 
 /* ===== ТРЕЙДЫ ===== */
-window.tradeEnabled = true;
+let tradeEnabled = true;
 
-window.toggleTrades = function() {
-    window.tradeEnabled = !window.tradeEnabled;
-    document.getElementById("tradeStatus").innerText = window.tradeEnabled ? "Трейды включены" : "Трейды отключены";
-}
+document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.querySelector("#trades button:nth-child(2) span").parentElement;
+    const sendBtn = document.querySelector("#trades button:last-of-type");
 
-window.sendTrade = async function() {
-    if(!window.tradeEnabled){ 
-        alert("Трейды сейчас отключены"); 
-        return; 
-    }
+    const tradeStatus = document.getElementById("tradeStatus");
+    const tradeUser = document.getElementById("tradeUser");
+    const tradeAmount = document.getElementById("tradeAmount");
+    const tradeResult = document.getElementById("tradeResult");
 
-    const targetName = document.getElementById("tradeUser").value.trim();
-    const amount = Number(document.getElementById("tradeAmount").value);
-
-    if(!targetName || !amount || amount <= 0){ 
-        alert("Введите игрока и сумму"); 
-        return; 
-    }
-
-    if(amount > bag){ 
-        alert("Недостаточно денег"); 
-        return; 
-    }
-
-    const groupSnap = await get(ref(db,"groups/"+chatId));
-    let targetId = null;
-    groupSnap.forEach(u => {
-        if(u.val().name === targetName) targetId = u.key;
+    toggleBtn.addEventListener("click", () => {
+        tradeEnabled = !tradeEnabled;
+        tradeStatus.innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
     });
 
-    if(!targetId){ 
-        alert("Игрок не найден"); 
-        return; 
-    }
+    sendBtn.addEventListener("click", async () => {
+        if(!tradeEnabled){ 
+            alert("Трейды сейчас отключены"); 
+            return; 
+        }
 
-    // Списываем у себя
-    bag -= amount;
-    await update(ref(db,"users/"+userId), { bag: bag });
+        const targetNameVal = tradeUser.value.trim();
+        const amountVal = Number(tradeAmount.value);
 
-    // Добавляем игроку
-    const targetSnap = await get(ref(db,"users/"+targetId));
-    let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
-    await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
+        if(!targetNameVal || !amountVal || amountVal <= 0){ 
+            alert("Введите игрока и сумму"); 
+            return; 
+        }
+        if(amountVal > bag){ 
+            alert("Недостаточно денег"); 
+            return; 
+        }
 
-    // Обновляем интерфейс
-    document.getElementById("bagAmount").innerText = bag;
-    document.getElementById("tradeResult").innerText = `Трейд успешно: ${amount} → ${targetName}`;
-}
+        const groupSnap = await get(ref(db,"groups/"+chatId));
+        let targetId = null;
+        groupSnap.forEach(u => {
+            if(u.val().name === targetNameVal) targetId = u.key;
+        });
+
+        if(!targetId){ 
+            alert("Игрок не найден"); 
+            return; 
+        }
+
+        // Списываем у себя
+        bag -= amountVal;
+        await update(ref(db,"users/"+userId), { bag: bag });
+
+        // Добавляем игроку
+        const targetSnap = await get(ref(db,"users/"+targetId));
+        let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
+        await update(ref(db,"users/"+targetId), { bag: targetBag + amountVal });
+
+        tradeResult.innerText = `Трейд успешно: ${amountVal} → ${targetNameVal}`;
+        document.getElementById("bagAmount").innerText = bag;
+    });
+});
     
 /* ===== КАЗИНО ===== */
 window.roll = async() => {
