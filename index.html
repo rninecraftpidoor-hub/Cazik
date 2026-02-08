@@ -195,13 +195,15 @@ async function loadBag(){
 loadBag();
 
 /* ===== ТРЕЙДЫ ===== */
-function toggleTrades() {
-    tradeEnabled = !tradeEnabled;
-    document.getElementById("tradeStatus").innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
+window.tradeEnabled = true;
+
+window.toggleTrades = function() {
+    window.tradeEnabled = !window.tradeEnabled;
+    document.getElementById("tradeStatus").innerText = window.tradeEnabled ? "Трейды включены" : "Трейды отключены";
 }
 
-async function sendTrade() {
-    if(!tradeEnabled){ 
+window.sendTrade = async function() {
+    if(!window.tradeEnabled){ 
         alert("Трейды сейчас отключены"); 
         return; 
     }
@@ -219,11 +221,10 @@ async function sendTrade() {
         return; 
     }
 
-    // Поиск игрока в группе
     const groupSnap = await get(ref(db,"groups/"+chatId));
     let targetId = null;
     groupSnap.forEach(u => {
-        if(u.val().name.toLowerCase().trim() === targetName.toLowerCase()) targetId = u.key;
+        if(u.val().name === targetName) targetId = u.key;
     });
 
     if(!targetId){ 
@@ -231,30 +232,20 @@ async function sendTrade() {
         return; 
     }
 
-    try {
-        // Получаем текущий баланс получателя
-        const targetSnap = await get(ref(db,"users/"+targetId));
-        let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
+    // Списываем у себя
+    bag -= amount;
+    await update(ref(db,"users/"+userId), { bag: bag });
 
-        // Списание у отправителя
-        bag -= amount;
-        await update(ref(db,"users/"+userId), { bag: bag });
+    // Добавляем игроку
+    const targetSnap = await get(ref(db,"users/"+targetId));
+    let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
+    await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
 
-        // Пополнение у получателя
-        await update(ref(db,"users/"+targetId), { bag: targetBag + amount });
-
-        // Обновляем интерфейс
-        document.getElementById("bagAmount").innerText = bag;
-        document.getElementById("tradeResult").innerText = `✅ Трейд успешно: ${amount} → ${targetName}`;
-
-        // Очищаем поля ввода для удобства
-        document.getElementById("tradeUser").value = "";
-        document.getElementById("tradeAmount").value = "";
-    } catch(err){
-        alert("❌ Ошибка при отправке трейда. Деньги не списаны.");
-        console.error(err);
-    }
+    // Обновляем интерфейс
+    document.getElementById("bagAmount").innerText = bag;
+    document.getElementById("tradeResult").innerText = `Трейд успешно: ${amount} → ${targetName}`;
 }
+    
 /* ===== КАЗИНО ===== */
 window.roll = async() => {
  const bet = Number(document.getElementById("bet").value);
@@ -285,16 +276,22 @@ window.roll = async() => {
   let d2 = Math.floor(Math.random()*6)+1;
   let sum = d1 + d2;
 
-  if(sum<=6){
-    currentWin = 0;
-    document.getElementById("winResult").innerText = "Проигрыш 💀";
-  } else if(sum<=9){
-    currentWin = Math.floor(bet*1.5*multiplier);
-    document.getElementById("winResult").innerText = `Выигрыш: ${currentWin}`;
-  } else {
-    currentWin = Math.floor(bet*2.2*multiplier);
-    document.getElementById("winResult").innerText = `КРУПНЫЙ ВЫИГРЫШ: ${currentWin}`;
-  }
+if(sum < 6){
+  currentWin = 0;
+  document.getElementById("winResult").innerText = "Проигрыш 💀";
+
+} else if(sum === 6){
+  currentWin = bet;
+  document.getElementById("winResult").innerText = "Возврат ставки 😐";
+
+} else if(sum <= 9){
+  currentWin = Math.floor(bet*1.5*multiplier);
+  document.getElementById("winResult").innerText = `Выигрыш: ${currentWin}`;
+
+} else {
+  currentWin = Math.floor(bet*2.2*multiplier);
+  document.getElementById("winResult").innerText = `КРУПНЫЙ ВЫИГРЫШ: ${currentWin}`;
+}
 
   document.getElementById("diceResult").innerText = `Выпало: ${d1} и ${d2}`;
   show("result");
