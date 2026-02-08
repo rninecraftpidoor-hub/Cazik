@@ -193,66 +193,6 @@ async function loadBag(){
  updateLevelUI();
 }
 loadBag();
-
-/* ===== ТРЕЙДЫ ===== */
-let tradeEnabled = true;
-
-document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.querySelector("#trades button:nth-child(2) span").parentElement;
-    const sendBtn = document.querySelector("#trades button:last-of-type");
-
-    const tradeStatus = document.getElementById("tradeStatus");
-    const tradeUser = document.getElementById("tradeUser");
-    const tradeAmount = document.getElementById("tradeAmount");
-    const tradeResult = document.getElementById("tradeResult");
-
-    toggleBtn.addEventListener("click", () => {
-        tradeEnabled = !tradeEnabled;
-        tradeStatus.innerText = tradeEnabled ? "Трейды включены" : "Трейды отключены";
-    });
-
-    sendBtn.addEventListener("click", async () => {
-        if(!tradeEnabled){ 
-            alert("Трейды сейчас отключены"); 
-            return; 
-        }
-
-        const targetNameVal = tradeUser.value.trim();
-        const amountVal = Number(tradeAmount.value);
-
-        if(!targetNameVal || !amountVal || amountVal <= 0){ 
-            alert("Введите игрока и сумму"); 
-            return; 
-        }
-        if(amountVal > bag){ 
-            alert("Недостаточно денег"); 
-            return; 
-        }
-
-        const groupSnap = await get(ref(db,"groups/"+chatId));
-        let targetId = null;
-        groupSnap.forEach(u => {
-            if(u.val().name === targetNameVal) targetId = u.key;
-        });
-
-        if(!targetId){ 
-            alert("Игрок не найден"); 
-            return; 
-        }
-
-        // Списываем у себя
-        bag -= amountVal;
-        await update(ref(db,"users/"+userId), { bag: bag });
-
-        // Добавляем игроку
-        const targetSnap = await get(ref(db,"users/"+targetId));
-        let targetBag = targetSnap.exists() ? (targetSnap.val().bag||0) : 0;
-        await update(ref(db,"users/"+targetId), { bag: targetBag + amountVal });
-
-        tradeResult.innerText = `Трейд успешно: ${amountVal} → ${targetNameVal}`;
-        document.getElementById("bagAmount").innerText = bag;
-    });
-});
     
 /* ===== КАЗИНО ===== */
 window.roll = async() => {
